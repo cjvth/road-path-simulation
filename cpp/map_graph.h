@@ -16,7 +16,8 @@ struct Edge {
 
 struct MapGraph {
     map<EdgeId, Edge> edges;
-    map<VertexId, vector<EdgeId>> vertex_to_edges;
+    map<VertexId, vector<EdgeId>> go_from_vertex;
+    map<VertexId, vector<EdgeId>> vertex_index;
 
 };
 

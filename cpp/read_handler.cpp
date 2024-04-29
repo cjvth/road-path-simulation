@@ -11,7 +11,11 @@ void ReadHandler::way(const osmium::Way &x) {
     // graph.edges[id].id = id;
     for (auto a: x.nodes()) {
         graph.edges[id].nodes.push_back(a.ref());
-        graph.vertex_to_edges[a.ref()].push_back(id);
+        graph.vertex_index[a.ref()].push_back(id);
     }
+    graph.go_from_vertex[x.nodes()[0].ref()].push_back(id);
+    if (!x.tags()["oneway"] && !x.tags()["roundabout"])
+    // if constexpr (true)
+        graph.go_from_vertex[x.nodes()[x.nodes().size() - 1].ref()].push_back(id);
     graph.edges[id].cost = stof(x.tags().get_value_by_key("cost"));
 }

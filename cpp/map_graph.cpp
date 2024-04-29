@@ -19,7 +19,7 @@ void bfs(const MapGraph &graph, const VertexId from, const VertexId to) {
             } while (x != from);
             return;
         }
-        for (EdgeId edge: graph.vertex_to_edges.at(cur)) {
+        for (EdgeId edge: graph.go_from_vertex.at(cur)) {
             const vector<VertexId> &nodes = graph.edges.at(edge).nodes;
             if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
                 to_visit.push(next);
@@ -55,7 +55,9 @@ void dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
             cout << "\b\b" << endl;
             return;
         }
-        for (EdgeId edge_id: graph.vertex_to_edges.at(cur)) {
+        if (!graph.go_from_vertex.contains(cur))
+            continue;
+        for (EdgeId edge_id: graph.go_from_vertex.at(cur)) {
             auto &[nodes, edge_cost] = graph.edges.at(edge_id);
             if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
                 if (float new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {

@@ -18,7 +18,7 @@ int main(const int argc, char *argv[]) {
     osmium::apply(reader, handler);
     const MapGraph &graph = handler.graph;
     dijkstra(graph, 659897210, 964942448);
-    // dijkstra(graph, 659897210, 279873701);
+    // dijkstra(graph, 659897210, 420483891);
 
     return 0;
 }
