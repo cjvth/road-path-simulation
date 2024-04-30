@@ -378,7 +378,8 @@ poetry.toml
 pyrightconfig.json
 
 #отключаем экспрот промежуточных файлов, кроме исходников
-.osm/
+.osm/*
+.osm/cost.osm
 !.osm/export.osm
 
 
