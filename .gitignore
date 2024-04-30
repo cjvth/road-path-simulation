@@ -378,10 +378,11 @@ poetry.toml
 pyrightconfig.json
 
 #отключаем экспрот промежуточных файлов, кроме исходников
-.osm/*
-.osm/cost.osm
-!.osm/export.osm
-!.osm/mediumRoadBuildingExport.osm
+
+
 
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,cmake,python,jupyternotebooks,pycharm+all,clion+all
+/osm
+!/osm/export.osm
+!/osm/mediumRoadBuildingExport.osm
