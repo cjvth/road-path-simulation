@@ -377,4 +377,10 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+#отключаем экспрот промежуточных файлов, кроме исходников
+.osm/*
+.osm/cost.osm
+!.osm/export.osm
+
+
 # End of https://www.toptal.com/developers/gitignore/api/c++,cmake,python,jupyternotebooks,pycharm+all,clion+all
