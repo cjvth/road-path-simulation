@@ -379,6 +379,7 @@ pyrightconfig.json
 
 #отключаем экспрот промежуточных файлов, кроме исходников
 .osm/*
+.osm/cost.osm
 !.osm/export.osm
 
 
