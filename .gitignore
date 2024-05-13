@@ -383,6 +383,6 @@ pyrightconfig.json
 
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,cmake,python,jupyternotebooks,pycharm+all,clion+all
-/osm/*.osm
+/osm/*
 !/osm/export.osm
-!/osm/mediumRoadBuildingExport.osm
+!/osm/export.overpassql
