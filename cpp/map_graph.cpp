@@ -3,6 +3,16 @@
 #include <iostream>
 #include <set>
 
+VertexId middle_to_end(const MapGraph &graph, const VertexId given, const bool need_last) {
+    const vector<EdgeId> &edges = graph.vertex_index.at(given);
+    if (edges.size() > 1)
+        return given;
+    const auto &[nodes, cost] = graph.edges.at(edges[0]);
+    if (need_last)
+        return nodes[nodes.size() - 1];
+    return nodes[0];
+}
+
 void bfs(const MapGraph &graph, const VertexId from, const VertexId to) {
     queue<VertexId> to_visit({from});
     set<VertexId> checked;
@@ -31,7 +41,7 @@ void bfs(const MapGraph &graph, const VertexId from, const VertexId to) {
     }
 }
 
-void dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
+bool dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
     priority_queue<pair<float, VertexId>, vector<pair<float, VertexId> >, greater<> > to_visit;
     map<VertexId, float> path_cost;
     set<VertexId> checked;
@@ -44,16 +54,14 @@ void dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
             continue;
         checked.insert(cur);
         if (cur == to) {
-            cout << "Found de way with cost " << cost << endl;
-            VertexId x = to;
-            cout << to << ", ";
-            do {
-                const VertexId prev = came_from[x].first;
-                cout << prev << ", ";
-                x = prev;
-            } while (x != from);
-            cout << "\b\b" << endl;
-            return;
+            // cout << "Found de way with cost " << cost << endl;
+            // VertexId x = to;
+            // while (x != from) {
+            //     cout << x << ", ";
+            //     x = came_from[x].first;
+            // }
+            // cout << from << endl;
+            return true;
         }
         if (!graph.go_from_vertex.contains(cur))
             continue;
@@ -68,4 +76,5 @@ void dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
             }
         }
     }
+    return false;
 }
