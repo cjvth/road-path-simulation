@@ -3,9 +3,9 @@
 #include <osmium/osm/node.hpp>
 #include <osmium/osm/way.hpp>
 
-// void ReadHandler::node(const osmium::Node &n) {
-//
-// }
+void ReadHandler::node(const osmium::Node &n) {
+    graph.coords[n.id()] = n.location();
+}
 
 void ReadHandler::way(const osmium::Way &w) {
     const EdgeId id = w.id();

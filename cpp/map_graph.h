@@ -1,8 +1,6 @@
 #ifndef MAP_GRAPH_H
 #define MAP_GRAPH_H
-#include <vector>
-#include <map>
-#include <queue>
+#include <osmium/geom/coordinates.hpp>
 
 using namespace std;
 
@@ -16,9 +14,10 @@ struct Edge {
 };
 
 struct MapGraph {
-    map<EdgeId, Edge> edges;
-    map<VertexId, vector<EdgeId> > go_from_vertex;
-    map<VertexId, vector<EdgeId> > vertex_index;
+    unordered_map<VertexId, osmium::geom::Coordinates> coords;
+    unordered_map<EdgeId, Edge> edges;
+    unordered_map<VertexId, vector<EdgeId> > go_from_vertex;
+    unordered_map<VertexId, vector<EdgeId> > vertex_index;
 };
 
 
@@ -27,5 +26,7 @@ VertexId middle_to_end(const MapGraph &graph, VertexId given, bool need_last);
 void bfs(const MapGraph &graph, VertexId from, VertexId to);
 
 bool dijkstra(const MapGraph &graph, VertexId from, VertexId to);
+
+bool a_star(const MapGraph &graph, VertexId from, VertexId to);
 
 #endif //MAP_GRAPH_H

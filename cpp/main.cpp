@@ -22,7 +22,8 @@ int main(const int argc, char *argv[]) {
     const MapGraph &graph = handler.graph;
 
     int success = 0;
-    constexpr int total = 1000;
+    int success_a_star = 0;
+    constexpr int total = 10000;
     ifstream points(points_file);
     for (int i = 0; i < total; i++) {
         VertexId from, to;
@@ -30,13 +31,20 @@ int main(const int argc, char *argv[]) {
         from = middle_to_end(graph, from, i % 2);
         to = middle_to_end(graph, to, i % 4 > 1);
         // cout << from << " " << to << ":\n";
-        if (dijkstra(graph, from, to)) {
-            success++;
+        // if (dijkstra(graph, from, to)) {
+        //     success++;
+        // }
+        if (a_star(graph, from, to)) {
+            success_a_star++;
         }
         // cout << "\n\n\n";
     }
 
-    cout << "Success: " << success << " out of " << total << endl;
+    // dijkstra(graph, 681808138, 320138418);
+    // a_star(graph, 681808138, 320138418);
+
+    // cout << "Success: " << success << " out of " << total << endl;
+    // cout << "Success A*: " << success_a_star << " out of " << total << endl;
 
     return 0;
 }
