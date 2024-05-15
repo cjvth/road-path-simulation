@@ -107,9 +107,8 @@ bool a_star(const MapGraph &graph, const VertexId from, const VertexId to) {
     while (!to_visit.empty()) {
         auto [est_cost, cost, cur] = to_visit.top();
         to_visit.pop();
-        if (checked.contains(cur))
+        if (const bool inserted = checked.insert(cur).second; !inserted)
             continue;
-        checked.insert(cur);
         if (cur == to) {
             // cout << "Found de way with cost " << cost << endl;
             // VertexId x = to;
@@ -121,17 +120,20 @@ bool a_star(const MapGraph &graph, const VertexId from, const VertexId to) {
             // cout << total_ops << " " << to_visit.size() << endl;
             return true;
         }
-        if (!graph.go_from_vertex.contains(cur))
-            continue;
-        for (EdgeId edge_id: graph.go_from_vertex.at(cur)) {
-            auto &[nodes, edge_cost] = graph.edges.at(edge_id);
-            if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
-                if (!heuristics.contains(next))
-                    heuristics[next] = calc_heuristic(graph.coords.at(next), graph.coords.at(to));
-                if (double new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {
-                    path_cost[next] = new_cost;
-                    to_visit.emplace(new_cost + heuristics[next], new_cost, next);
-                    came_from[next] = {cur, edge_id};
+        {
+            const auto &go_from_cur = graph.go_from_vertex.find(cur);
+            if (go_from_cur == graph.go_from_vertex.end())
+                continue;
+            for (const auto &value = go_from_cur->second; EdgeId edge_id: value) {
+                auto &[nodes, edge_cost] = graph.edges.at(edge_id);
+                if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
+                    if (double new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {
+                        if (!heuristics.contains(next))
+                            heuristics[next] = calc_heuristic(graph.coords.at(next), graph.coords.at(to));
+                        path_cost[next] = new_cost;
+                        to_visit.emplace(new_cost + heuristics[next], new_cost, next);
+                        came_from[next] = {cur, edge_id};
+                    }
                 }
             }
         }
