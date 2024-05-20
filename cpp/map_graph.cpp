@@ -17,17 +17,42 @@ VertexId middle_to_end(const MapGraph &graph, const VertexId given, const bool n
     return nodes[0];
 }
 
-inline double calc_heuristic(const osmium::geom::Coordinates &p1, const osmium::geom::Coordinates &p2) {
-    // return osmium::geom::haversine::distance(p1, p2);
+
+constexpr double default_x_degree = 40075016.7 / 360;
+constexpr double default_y_degree = 40075016.7 / 360;
+constexpr double y_diff_error = 0.0001;
+
+struct HeuristicState {
+    double x_degree{};
+    double y_degree = default_y_degree;
+    double max_latitude{};
+    double x_coeff{};
+
+    explicit HeuristicState(const osmium::geom::Coordinates &to) {
+        update_x_degree(to);
+    }
+
+    void update_x_degree(const osmium::geom::Coordinates &c) {
+        max_latitude = min(90., c.y + y_diff_error);
+        x_coeff = cos(osmium::geom::deg_to_rad(max_latitude));
+        x_degree = default_x_degree * x_coeff;
+    }
+};
+
+inline double calc_heuristic(const osmium::geom::Coordinates &prob, const osmium::geom::Coordinates &dest,
+                             HeuristicState &h_state) {
+    // return osmium::geom::haversine::distance(prob, dest);
     // constexpr double x_degree = 63995;
-    constexpr double x_degree = 40075016.7 / 360;
-    constexpr double y_degree = 40075016.7 / 360;
-    double dx = abs(p1.x - p2.x);
+
+    if (abs(prob.y) - h_state.max_latitude > y_diff_error) {
+        h_state.update_x_degree(prob);
+    }
+    double dx = abs(prob.x - dest.x);
     if (dx > 180)
         dx -= 180;
-    double dy = abs(p1.y - p2.y);
-    // return sqrt((dx * x_degree) * (dx * x_degree) + (dy * y_degree) * (dy * y_degree));
-    return dx * x_degree + dy * y_degree;
+    double dy = abs(prob.y - dest.y);
+    return sqrt((dx * h_state.x_degree) * (dx * h_state.x_degree) +
+                (dy * h_state.y_degree) * (dy * h_state.y_degree));
 }
 
 
@@ -95,6 +120,7 @@ pair<double, unique_ptr<traversal_path> > a_star(const MapGraph &graph, const Ve
     unordered_map<VertexId, pair<VertexId, EdgeId> > came_from;
     unordered_map<VertexId, double> heuristics;
     unordered_map<VertexId, int> n_steps;
+    auto h_state = HeuristicState(graph.coords.at(to));
     to_visit.emplace(0, 0, from);
     n_steps[from] = 0;
     while (!to_visit.empty()) {
@@ -114,7 +140,7 @@ pair<double, unique_ptr<traversal_path> > a_star(const MapGraph &graph, const Ve
                 if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
                     if (double new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {
                         if (!heuristics.contains(next))
-                            heuristics[next] = calc_heuristic(graph.coords.at(next), graph.coords.at(to));
+                            heuristics[next] = calc_heuristic(graph.coords.at(next), graph.coords.at(to), h_state);
                         path_cost[next] = new_cost;
                         to_visit.emplace(new_cost + heuristics[next], new_cost, next);
                         came_from[next] = {cur, edge_id};

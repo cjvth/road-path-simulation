@@ -7,6 +7,7 @@
 #include "map_graph.h"
 
 using namespace std;
+constexpr int max_total = 10000;
 
 
 void print_path(const VertexId from, const VertexId to, const unique_ptr<traversal_path> &path) {
@@ -20,11 +21,11 @@ void print_path(const VertexId from, const VertexId to, const unique_ptr<travers
     cout << to << endl;
 }
 
-void compare_algorithms(const MapGraph &graph, ifstream points) {
+void compare_algorithms(const MapGraph &graph, ifstream &points) {
     int same = 0;
     int different = 0;
     int total = 0;
-    for (int i = 0;; i++) {
+    for (int i = 0; i < max_total; i++) {
         VertexId from, to;
         points >> from >> to;
         if (points.eof()) {
@@ -63,6 +64,21 @@ void compare_algorithms(const MapGraph &graph, ifstream points) {
     }
 }
 
+void run_all_a_star(const MapGraph &graph, ifstream &points) {
+    for (int i = 0; i < max_total; i++) {
+        VertexId from, to;
+        points >> from >> to;
+        if (points.eof()) {
+            return;
+        }
+        from = middle_to_end(graph, from, i % 2);
+        to = middle_to_end(graph, to, i % 4 > 1);
+        // cout << from << " " << to << endl;
+        // usleep(100);
+        a_star(graph, from, to);
+    }
+}
+
 int main(const int argc, char *argv[]) {
     if (argc < 3) {
         cerr << "Not enough arguments";
@@ -76,13 +92,18 @@ int main(const int argc, char *argv[]) {
     const MapGraph &graph = handler.graph;
 
     ifstream points(points_file);
-    compare_algorithms(graph, points_file);
+    // compare_algorithms(graph, points);
+    run_all_a_star(graph, points);
 
-    // constexpr VertexId from = 820268080;
-    // constexpr VertexId to = 178735877;
+    // constexpr VertexId from = 1076910798;
+    // constexpr VertexId to = 1082162408;
 
-    // print_path(from, to, dijkstra(graph, from, to).second);
-    // print_path(from, to, a_star(graph, from, to).second);
+    // auto [d_cost, d_path] = dijkstra(graph, from, to);
+    // cout << d_cost << "\n";
+    // print_path(from, to, d_path);
+    // auto [a_cost, a_path] = a_star(graph, from, to);
+    // cout << a_cost << "\n";
+    // print_path(from, to, a_path);
 
     return 0;
 }
