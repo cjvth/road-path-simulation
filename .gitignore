@@ -386,3 +386,4 @@ pyrightconfig.json
 /osm/*
 !/osm/export.osm
 !/osm/export.overpassql
+!/osm/exportWithBridge.overpassql
