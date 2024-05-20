@@ -9,6 +9,13 @@
 using namespace std;
 
 
+void print_path(const VertexId from, const VertexId to, const traversal_path &path) {
+    for (const auto [v, e]: path) {
+        cout << v << ", ";
+    }
+    cout << to << endl;
+}
+
 int main(const int argc, char *argv[]) {
     if (argc < 3) {
         cerr << "Not enough arguments";
@@ -21,7 +28,7 @@ int main(const int argc, char *argv[]) {
     osmium::apply(reader, handler);
     const MapGraph &graph = handler.graph;
 
-    int success = 0;
+    int success_dijkstra = 0;
     int success_a_star = 0;
     constexpr int total = 10000;
     ifstream points(points_file);
@@ -30,14 +37,16 @@ int main(const int argc, char *argv[]) {
         points >> from >> to;
         from = middle_to_end(graph, from, i % 2);
         to = middle_to_end(graph, to, i % 4 > 1);
-        // cout << from << " " << to << ":\n";
-        // if (dijkstra(graph, from, to)) {
-        //     success++;
+        cout << from << " -> " << to << ":\n";
+        // if (const auto path = dijkstra(graph, from, to)) {
+        //     print_path(from, to, *path);
+        //     success_dijkstra++;
         // }
-        if (a_star(graph, from, to)) {
+        if (const auto path = a_star(graph, from, to)) {
+            print_path(from, to, *path);
             success_a_star++;
         }
-        // cout << "\n\n\n";
+        cout << "\n";
     }
 
     // dijkstra(graph, 681808138, 320138418);
