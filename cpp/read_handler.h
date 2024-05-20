@@ -8,7 +8,7 @@
 struct ReadHandler : osmium::handler::Handler {
     MapGraph graph{};
 
-    void node(const osmium::Node& n);
+    void node(const osmium::Node &n);
 
     void way(const osmium::Way &w);
 };

@@ -3,11 +3,18 @@
 #include <fstream>
 #include <osmium/visitor.hpp>
 #include <osmium/io/xml_input.hpp>
+#include <osmium/io/xml_output.hpp>
+
+#include "add_visits_handler.h"
 #include "read_handler.h"
 #include "map_graph.h"
 
 using namespace std;
-constexpr int max_total = 10000;
+#ifndef NDEBUG
+constexpr int max_total = 200;
+#else
+constexpr int max_total = 100000;
+#endif
 
 
 void print_path(const VertexId from, const VertexId to, const unique_ptr<traversal_path> &path) {
@@ -79,6 +86,43 @@ void run_all_a_star(const MapGraph &graph, ifstream &points) {
     }
 }
 
+void save_visits(const MapGraph &graph, ifstream &points,
+                 const filesystem::path &osm_file,
+                 const filesystem::path &output_file) {
+    unordered_map<VertexId, int> vertex_visits;
+    unordered_map<EdgeId, int> edge_visits;
+    cout << "\n";
+    for (int j = 0; j < max_total; j += 100) {
+        cout << "\r" << "Current points: " << j;
+        cout.flush();
+        for (int i = j; i < j + 100; i++) {
+            VertexId from, to;
+            points >> from >> to;
+            if (points.eof()) {
+                goto start_writing;
+            }
+            from = middle_to_end(graph, from, i % 2);
+            to = middle_to_end(graph, to, i % 4 > 1);
+            if (i % 2 == 1)
+                swap(from, to);
+            if (auto path = a_star(graph, from, to).second; path != nullptr) {
+                for (auto [v, e]: *path) {
+                    vertex_visits[v]++;
+                    edge_visits[e]++;
+                }
+            }
+        }
+    }
+start_writing:
+    cout << "\r";
+    cout.flush();
+    auto writer = osmium::io::Writer(output_file, osmium::io::overwrite::allow);
+    auto avh = AddVisitsHandler(writer, vertex_visits, edge_visits);
+    osmium::io::Reader reader(osm_file);
+    osmium::apply(reader, avh);
+}
+
+
 int main(const int argc, char *argv[]) {
     if (argc < 3) {
         cerr << "Not enough arguments";
@@ -86,24 +130,17 @@ int main(const int argc, char *argv[]) {
     }
     const auto osm_file = filesystem::path(argv[1]);
     const auto points_file = filesystem::path(argv[2]);
-    osmium::io::Reader reader{osm_file};
+    const auto out_file = filesystem::path(argv[3]);
+    ifstream points(points_file);
+    osmium::io::Reader reader(osm_file);
     ReadHandler handler{};
     osmium::apply(reader, handler);
     const MapGraph &graph = handler.graph;
 
-    ifstream points(points_file);
     // compare_algorithms(graph, points);
-    run_all_a_star(graph, points);
+    // run_all_a_star(graph, points);
+    save_visits(graph, points, osm_file, out_file);
 
-    // constexpr VertexId from = 1076910798;
-    // constexpr VertexId to = 1082162408;
-
-    // auto [d_cost, d_path] = dijkstra(graph, from, to);
-    // cout << d_cost << "\n";
-    // print_path(from, to, d_path);
-    // auto [a_cost, a_path] = a_star(graph, from, to);
-    // cout << a_cost << "\n";
-    // print_path(from, to, a_path);
 
     return 0;
 }
