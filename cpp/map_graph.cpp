@@ -46,7 +46,10 @@ unique_ptr<traversal_path> get_path(const VertexId from, const VertexId to, int 
 }
 
 
-unique_ptr<traversal_path> dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
+pair<double, unique_ptr<traversal_path> > dijkstra(const MapGraph &graph, const VertexId from, const VertexId to) {
+    if (from == to) {
+        return {0, make_unique<traversal_path>(0)};
+    }
     priority_queue<pair<float, VertexId>, vector<pair<float, VertexId> >, greater<> > to_visit;
     unordered_map<VertexId, float> path_cost;
     unordered_set<VertexId> checked;
@@ -61,7 +64,7 @@ unique_ptr<traversal_path> dijkstra(const MapGraph &graph, const VertexId from, 
             continue;
         checked.insert(cur);
         if (cur == to) {
-            return get_path(from, to, n_steps.at(to), came_from);
+            return {cost, get_path(from, to, n_steps.at(to), came_from)};
         }
         if (!graph.go_from_vertex.contains(cur))
             continue;
@@ -78,10 +81,13 @@ unique_ptr<traversal_path> dijkstra(const MapGraph &graph, const VertexId from, 
             }
         }
     }
-    return nullptr;
+    return {0, nullptr};
 }
 
-unique_ptr<traversal_path> a_star(const MapGraph &graph, const VertexId from, const VertexId to) {
+pair<double, unique_ptr<traversal_path> > a_star(const MapGraph &graph, const VertexId from, const VertexId to) {
+    if (from == to) {
+        return {0, make_unique<traversal_path>(0)};
+    }
     // cost with estimation, known cost, vertex
     priority_queue<tuple<double, double, VertexId>, vector<tuple<double, double, VertexId> >, greater<> > to_visit;
     unordered_map<VertexId, double> path_cost;
@@ -97,7 +103,7 @@ unique_ptr<traversal_path> a_star(const MapGraph &graph, const VertexId from, co
         if (const bool inserted = checked.insert(cur).second; !inserted)
             continue;
         if (cur == to) {
-            return get_path(from, to, n_steps.at(to), came_from);
+            return {cost, get_path(from, to, n_steps.at(to), came_from)};
         } {
             const int new_n_steps = n_steps.at(cur) + 1;
             const auto &go_from_cur = graph.go_from_vertex.find(cur);
@@ -118,5 +124,5 @@ unique_ptr<traversal_path> a_star(const MapGraph &graph, const VertexId from, co
             }
         }
     }
-    return nullptr;
+    return {0, nullptr};
 }

@@ -9,11 +9,58 @@
 using namespace std;
 
 
-void print_path(const VertexId from, const VertexId to, const traversal_path &path) {
-    for (const auto [v, e]: path) {
+void print_path(const VertexId from, const VertexId to, const unique_ptr<traversal_path> &path) {
+    if (path == nullptr) {
+        cout << from << " -> " << to << ": RECIEVED NULLPTR PATH\n";
+        return;
+    }
+    for (const auto [v, e]: *path) {
         cout << v << ", ";
     }
     cout << to << endl;
+}
+
+void compare_algorithms(const MapGraph &graph, ifstream points) {
+    int same = 0;
+    int different = 0;
+    int total = 0;
+    for (int i = 0;; i++) {
+        VertexId from, to;
+        points >> from >> to;
+        if (points.eof()) {
+            cout << "Same: " << same << " out of " << total << endl;
+            cout << "Different: " << different << " out of " << total << endl;
+            return;
+        }
+        from = middle_to_end(graph, from, i % 2);
+        to = middle_to_end(graph, to, i % 4 > 1);
+        // cout << from << " " << to << endl;
+        // usleep(100);
+        const auto &[d_cost, d_path] = dijkstra(graph, from, to);
+        // ReSharper disable once CppTooWideScopeInitStatement
+        const auto &[a_cost, a_path] = a_star(graph, from, to);
+        if (d_path == nullptr ^ a_path == nullptr) {
+            if (d_path == nullptr) {
+                cout << "Only Dijkstra failed. A*:\n";
+                print_path(from, to, a_path);
+            } else {
+                cout << "Only A* failed. Dijkstra:\n";
+                print_path(from, to, d_path);
+            }
+        } else if (d_path != nullptr) {
+            if (*d_path != *a_path) {
+                cout << "Algorithms gave different result. Dijkstra with cost " << d_cost << " and A* " << a_cost <<
+                        endl;
+                print_path(from, to, d_path);
+                print_path(from, to, a_path);
+                cout << endl;
+                different++;
+            } else {
+                same++;
+            }
+            total++;
+        }
+    }
 }
 
 int main(const int argc, char *argv[]) {
@@ -28,32 +75,14 @@ int main(const int argc, char *argv[]) {
     osmium::apply(reader, handler);
     const MapGraph &graph = handler.graph;
 
-    int success_dijkstra = 0;
-    int success_a_star = 0;
-    constexpr int total = 10000;
     ifstream points(points_file);
-    for (int i = 0; i < total; i++) {
-        VertexId from, to;
-        points >> from >> to;
-        from = middle_to_end(graph, from, i % 2);
-        to = middle_to_end(graph, to, i % 4 > 1);
-        cout << from << " -> " << to << ":\n";
-        // if (const auto path = dijkstra(graph, from, to)) {
-        //     print_path(from, to, *path);
-        //     success_dijkstra++;
-        // }
-        if (const auto path = a_star(graph, from, to)) {
-            print_path(from, to, *path);
-            success_a_star++;
-        }
-        cout << "\n";
-    }
+    compare_algorithms(graph, points_file);
 
-    // dijkstra(graph, 681808138, 320138418);
-    // a_star(graph, 681808138, 320138418);
+    // constexpr VertexId from = 820268080;
+    // constexpr VertexId to = 178735877;
 
-    // cout << "Success: " << success << " out of " << total << endl;
-    // cout << "Success A*: " << success_a_star << " out of " << total << endl;
+    // print_path(from, to, dijkstra(graph, from, to).second);
+    // print_path(from, to, a_star(graph, from, to).second);
 
     return 0;
 }

@@ -28,8 +28,8 @@ VertexId middle_to_end(const MapGraph &graph, VertexId given, bool need_last);
 
 void bfs(const MapGraph &graph, VertexId from, VertexId to);
 
-unique_ptr<traversal_path> dijkstra(const MapGraph &graph, VertexId from, VertexId to);
+pair<double, unique_ptr<traversal_path> > dijkstra(const MapGraph &graph, VertexId from, VertexId to);
 
-unique_ptr<traversal_path> a_star(const MapGraph &graph, VertexId from, VertexId to);
+pair<double, unique_ptr<traversal_path> > a_star(const MapGraph &graph, VertexId from, VertexId to);
 
 #endif //MAP_GRAPH_H
