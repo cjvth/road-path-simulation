@@ -30,6 +30,10 @@ void AddVisitsHandler::way(const osmium::Way &w) const {
     if (const auto pos = edge_visits.find(w.id()); pos != edge_visits.end()) {
         visits = pos->second;
     }
+    if (w.tags().has_tag("oneway", "yes") ||
+        w.tags().has_tag("junction", "roundabout") ||
+        w.tags().has_tag("junction", "circular") && !w.tags().has_tag("oneway", "no"))
+        visits *= 2;
     osmium::builder::add_way(buffer,
                              _id(w.id()),
                              _nodes(w.nodes()),

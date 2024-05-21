@@ -86,7 +86,7 @@ void run_all_a_star(const MapGraph &graph, ifstream &points) {
     }
 }
 
-void save_visits(const MapGraph &graph, ifstream &points,
+void save_visits(MapGraph &graph, ifstream &points,
                  const filesystem::path &osm_file,
                  const filesystem::path &output_file) {
     unordered_map<VertexId, int> vertex_visits;
@@ -109,6 +109,7 @@ void save_visits(const MapGraph &graph, ifstream &points,
                 for (auto [v, e]: *path) {
                     vertex_visits[v]++;
                     edge_visits[e]++;
+                    graph.edges[e].cost *= 1.0001;
                 }
             }
         }
@@ -135,12 +136,11 @@ int main(const int argc, char *argv[]) {
     osmium::io::Reader reader(osm_file);
     ReadHandler handler{};
     osmium::apply(reader, handler);
-    const MapGraph &graph = handler.graph;
+    MapGraph &graph = handler.graph;
 
     // compare_algorithms(graph, points);
     // run_all_a_star(graph, points);
     save_visits(graph, points, osm_file, out_file);
-
 
     return 0;
 }
