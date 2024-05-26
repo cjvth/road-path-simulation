@@ -2,7 +2,6 @@
 #define ADD_USAGE_HANDLER_H
 
 #include <osmium/handler.hpp>
-#include <osmium/memory/buffer.hpp>
 #include <osmium/io/writer.hpp>
 
 #include "map_graph.h"

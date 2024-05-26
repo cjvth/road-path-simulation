@@ -18,6 +18,20 @@ VertexId middle_to_end(const MapGraph &graph, const VertexId given, const bool n
 }
 
 
+const unordered_set<EdgeId> *get_go_from_vertex(const MapGraph &graph, const VertexId at, const EdgeId from) {
+    if (const auto special_v = graph.allowed_go_from_vertex.find(at);
+        special_v != graph.allowed_go_from_vertex.end()) {
+        if (const auto go_to = special_v->second.find(from); go_to != special_v->second.end()) {
+            return &go_to->second;
+        }
+    }
+    if (const auto go_to = graph.go_from_vertex.find(at); go_to != graph.go_from_vertex.end()) {
+        return &go_to->second;
+    }
+    return nullptr;
+}
+
+
 constexpr double default_x_degree = 40075016.7 / 360;
 constexpr double default_y_degree = 40075016.7 / 360;
 constexpr double y_diff_error = 0.0001;
@@ -51,8 +65,8 @@ inline double calc_heuristic(const osmium::geom::Coordinates &prob, const osmium
     if (dx > 180)
         dx -= 180;
     double dy = abs(prob.y - dest.y);
-    return sqrt((dx * h_state.x_degree) * (dx * h_state.x_degree) +
-                (dy * h_state.y_degree) * (dy * h_state.y_degree));
+    return sqrt(dx * h_state.x_degree * (dx * h_state.x_degree) +
+                dy * h_state.y_degree * (dy * h_state.y_degree));
 }
 
 
@@ -79,6 +93,7 @@ pair<double, unique_ptr<traversal_path> > dijkstra(const MapGraph &graph, const 
     unordered_map<VertexId, float> path_cost;
     unordered_set<VertexId> checked;
     unordered_map<VertexId, pair<VertexId, EdgeId> > came_from;
+    came_from[from] = {-1, -1};
     unordered_map<VertexId, int> n_steps;
     to_visit.emplace(0, from);
     n_steps[from] = 0;
@@ -93,15 +108,18 @@ pair<double, unique_ptr<traversal_path> > dijkstra(const MapGraph &graph, const 
         }
         if (!graph.go_from_vertex.contains(cur))
             continue;
-        const int new_n_steps = n_steps.at(cur) + 1;
-        for (EdgeId edge_id: graph.go_from_vertex.at(cur)) {
-            auto &[nodes, edge_cost] = graph.edges.at(edge_id);
-            if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
-                if (float new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {
-                    path_cost[next] = new_cost;
-                    to_visit.emplace(new_cost, next);
-                    came_from[next] = {cur, edge_id};
-                    n_steps[next] = new_n_steps;
+        if (const auto go_from_vertex = get_go_from_vertex(graph, cur, came_from.at(cur).second);
+            go_from_vertex != nullptr) {
+            const int new_n_steps = n_steps.at(cur) + 1;
+            for (EdgeId edge_id: *go_from_vertex) {
+                auto &[nodes, edge_cost] = graph.edges.at(edge_id);
+                if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
+                    if (float new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {
+                        path_cost[next] = new_cost;
+                        to_visit.emplace(new_cost, next);
+                        came_from[next] = {cur, edge_id};
+                        n_steps[next] = new_n_steps;
+                    }
                 }
             }
         }
@@ -118,6 +136,7 @@ pair<double, unique_ptr<traversal_path> > a_star(const MapGraph &graph, const Ve
     unordered_map<VertexId, double> path_cost;
     unordered_set<VertexId> checked;
     unordered_map<VertexId, pair<VertexId, EdgeId> > came_from;
+    came_from[from] = {-1, -1};
     unordered_map<VertexId, double> heuristics;
     unordered_map<VertexId, int> n_steps;
     auto h_state = HeuristicState(graph.coords.at(to));
@@ -130,15 +149,15 @@ pair<double, unique_ptr<traversal_path> > a_star(const MapGraph &graph, const Ve
             continue;
         if (cur == to) {
             return {cost, get_path(from, to, n_steps.at(to), came_from)};
-        } {
+        }
+        if (const auto go_from_vertex = get_go_from_vertex(graph, cur, came_from.at(cur).second);
+            go_from_vertex != nullptr) {
             const int new_n_steps = n_steps.at(cur) + 1;
-            const auto &go_from_cur = graph.go_from_vertex.find(cur);
-            if (go_from_cur == graph.go_from_vertex.end())
-                continue;
-            for (const auto &value = go_from_cur->second; EdgeId edge_id: value) {
+            for (EdgeId edge_id: *go_from_vertex) {
                 auto &[nodes, edge_cost] = graph.edges.at(edge_id);
                 if (VertexId next = nodes[0] + nodes[nodes.size() - 1] - cur; !checked.contains(next)) {
-                    if (double new_cost = cost + edge_cost; !path_cost.contains(next) || new_cost < path_cost[next]) {
+                    if (double new_cost = cost + edge_cost;
+                        !path_cost.contains(next) || new_cost < path_cost[next]) {
                         if (!heuristics.contains(next))
                             heuristics[next] = calc_heuristic(graph.coords.at(next), graph.coords.at(to), h_state);
                         path_cost[next] = new_cost;
