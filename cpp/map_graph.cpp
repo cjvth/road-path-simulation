@@ -12,6 +12,8 @@ VertexId middle_to_end(const MapGraph &graph, const VertexId given, const bool n
     if (edges.size() > 1)
         return given;
     const auto &[nodes, cost] = graph.edges.at(edges[0]);
+    if (nodes[0] == given || nodes[nodes.size() - 1] == given)
+        return given;
     if (need_last)
         return nodes[nodes.size() - 1];
     return nodes[0];
