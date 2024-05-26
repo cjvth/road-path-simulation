@@ -11,6 +11,8 @@ struct ReadHandler : osmium::handler::Handler {
     void node(const osmium::Node &n);
 
     void way(const osmium::Way &w);
+
+    void relation(const osmium::Relation &r);
 };
 
 #endif //READHANDLER_H
